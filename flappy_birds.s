@@ -1,4 +1,3 @@
-
 .data
 	displayAddress:	.word	0x10008000
 .text
@@ -9,31 +8,34 @@
 	li $t4, 0x008900	#pipe colors
 	add $t6, $zero, $t0 	#this is the actual address use
 	add $t7, $zero, $t6
-	add $t7, $t7, 1920
+	add $t7, $t7, 1920 	#for bird
+	
 main: 
-	jal loop
-	li $a0, 3000
+
+	addi $sp, $sp, -4
+	sw $t6, 0($sp)
+	jal screen
+	lw $t6, 0($sp)
+	addi $sp, $sp, 4
+	
+	addi $sp, $sp, -4
+	sw $t7, 0($sp)
+	jal bird
+	lw $t7, 0($sp)
+	addi $sp, $sp, 4
+	
 	li $v0, 32
+	li $a0, 1000
 	syscall
 	
-	lw $t0, displayAddress
-	add $t6, $zero, $t0
-	add $t6, $t6, 90
 	
-	j topPipe
+	j Exit
 	
+bird: 	
+	lw $t7, 0($sp)
+	addi $sp, $sp, 4
 	
-loop:	beq $t3, 4096, middle 	#this makes the screen blue
-	sw $t1, 0($t0)
-	add $t0, $t0, 4
-	add $t3, $t3, 4
-	j loop
-
-middle:	#lw $t0, displayAddress
-	#add $t0, $t0, 1920
-	#add $t6, $t6, 1920
-	
-bird: 	sw $t2, 0($t7)		#this makes the bird
+	sw $t2, 0($t7)		#this makes the bird
 	sw $t2, -128($t7)
 	sw $t2, 128($t7)
 	sw $t2, 4($t7)
@@ -41,7 +43,25 @@ bird: 	sw $t2, 0($t7)		#this makes the bird
 	sw $t2, -120($t7)
 	sw $t2, 136($t7)
 	sw $t2, 12($t7)
+	
+	addi $sp, $sp, -4
+	lw $t7, 0($sp)
+	
+	jr $ra
+	
+screen:	
+	lw $t6, 0($sp)
+	addi $sp, $sp, 4
+	
+	beq $t3, 4096, middle 	#this makes the screen blue
+	sw $t1, 0($t0)
+	add $t0, $t0, 4
+	add $t3, $t3, 4
+	j screen
 
+middle:	#lw $t0, displayAddress
+	#add $t0, $t0, 1920
+	#add $t6, $t6, 1920
 	lw $t0, displayAddress
 	add $t6, $zero, $t0
 	add $t6, $t6, 92
@@ -65,7 +85,7 @@ lowerPipe:
 	add $t6, $t6, 768
 	li $t3, 0
 	
-OuterLower:	beq $t3, 16, Exit
+OuterLower:	beq $t3, 16, Return
 		li $t5, 0
 InnerLower:		beq $t5, 3, IncreLower
 			sw $t4, 0($t6)
@@ -76,8 +96,11 @@ IncreLower:		add $t6, $t6, 116
 		add $t3, $t3, 1
 		j OuterLower
 
+Return: 
+	addi $sp, $sp, -4
+	sw $t6, 0($sp)
+	jr $ra
 
 Exit:
 	li $v0, 10 # terminate the program gracefully
 	syscall
-
